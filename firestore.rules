@@ -1,0 +1,23 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Note: Client-side discovery validation is not cheat-proof without
+    // trusted server-side validation (e.g. Cloud Functions). In client-only
+    // environments, rules enforce identity ownership and schema bounds.
+
+    match /leaderboard/{userId} {
+      // Anyone can read the global leaderboard
+      allow read: if true;
+
+      // Users can only create or update their own profile document
+      allow create, update: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.points >= 0
+        && request.resource.data.points <= 30
+        && request.resource.data.username is string
+        && request.resource.data.username.size() > 0
+        && request.resource.data.username.size() <= 20;
+
+      allow delete: if false;
+    }
+  }
+}
