@@ -7,9 +7,14 @@ let db = null;
 let currentUid = null;
 let isConfigured = false;
 let initPromise = null;
+let authErrorMessage = null;
 
 let initializeApp, getAuth, signInAnonymously, onAuthStateChanged;
 let getFirestore, collection, doc, getDoc, setDoc, updateDoc, getDocs, query, orderBy, limit, runTransaction, onSnapshot, getCountFromServer;
+
+export function getAuthErrorMessage() {
+  return authErrorMessage;
+}
 
 export function isFirebaseConfigured() {
   return Boolean(firebaseConfig.apiKey && firebaseConfig.apiKey !== 'YOUR_API_KEY');
@@ -71,6 +76,11 @@ export async function initFirebase() {
               resolve(cred.user);
             } catch (err) {
               console.warn('[Firebase Auth] Anonymous sign-in error:', err);
+              if (err?.code === 'auth/configuration-not-found') {
+                authErrorMessage = 'Anonymous Authentication is disabled in Firebase Console. Enable it in Authentication -> Sign-in method.';
+              } else {
+                authErrorMessage = err.message || 'Firebase Auth error';
+              }
               resolve(null);
             }
           }
@@ -179,21 +189,44 @@ export async function registerPlayer(rawUsername, currentScore = 0, currentSecre
   await initFirebase();
 
   if (isConfigured && db) {
-    await runTransaction(db, async (transaction) => {
-      const unameRef = doc(db, 'usernames', usernameLower);
-      const playerRef = doc(db, 'players', uid);
-
-      const unameSnap = await transaction.get(unameRef);
-      if (unameSnap.exists()) {
-        const existingData = unameSnap.data();
-        if (existingData.uid !== uid) {
-          throw new Error('Username already taken. Please choose another.');
+    if (auth && !auth.currentUser) {
+      try {
+        const cred = await signInAnonymously(auth);
+        currentUid = cred.user.uid;
+        profile.uid = currentUid;
+        localStorage.setItem('phantom_firebase_uid', currentUid);
+      } catch (authErr) {
+        if (authErr?.code === 'auth/configuration-not-found') {
+          throw new Error('Anonymous Authentication is disabled in Firebase Console. Please enable it under Authentication -> Sign-in method.');
         }
+        throw new Error('Firebase Authentication failed: ' + (authErr.message || authErr.code));
       }
+    }
 
-      transaction.set(unameRef, { uid, username, createdAt: now });
-      transaction.set(playerRef, profile);
-    });
+    try {
+      await runTransaction(db, async (transaction) => {
+        const activeUid = currentUid || uid;
+        const unameRef = doc(db, 'usernames', usernameLower);
+        const playerRef = doc(db, 'players', activeUid);
+
+        const unameSnap = await transaction.get(unameRef);
+        if (unameSnap.exists()) {
+          const existingData = unameSnap.data();
+          if (existingData.uid !== activeUid) {
+            throw new Error('Username already taken. Please choose another.');
+          }
+        }
+
+        profile.uid = activeUid;
+        transaction.set(unameRef, { uid: activeUid, username, createdAt: now });
+        transaction.set(playerRef, profile);
+      });
+    } catch (txErr) {
+      if (txErr?.code === 'permission-denied') {
+        throw new Error('Firestore permission denied (403). Ensure Anonymous Authentication is enabled and firestore.rules is published in Firebase Console.');
+      }
+      throw txErr;
+    }
   }
 
   try {

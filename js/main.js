@@ -10,7 +10,8 @@ import {
   checkUsernameAvailable,
   registerPlayer,
   fetchCurrentPlayerProfile,
-  isFirebaseConfigured
+  isFirebaseConfigured,
+  getAuthErrorMessage
 } from './core/firebase-service.js';
 
 import { openExplorer } from './apps/explorer.js';
@@ -134,18 +135,25 @@ class OSBootstrapper {
     const startBtn = document.getElementById('welcome-start-btn');
     const configStatusPill = document.getElementById('welcome-config-status');
 
+    // Initialize Auth in background
+    await initFirebase();
+
     if (configStatusPill) {
+      const authErr = getAuthErrorMessage();
       if (isFirebaseConfigured()) {
-        configStatusPill.textContent = 'Firestore Connected';
-        configStatusPill.className = 'welcome-status-pill pill-online';
+        if (authErr) {
+          configStatusPill.textContent = 'Auth Disabled (Check Console)';
+          configStatusPill.className = 'welcome-status-pill pill-local';
+          configStatusPill.title = authErr;
+        } else {
+          configStatusPill.textContent = 'Firestore Connected';
+          configStatusPill.className = 'welcome-status-pill pill-online';
+        }
       } else {
         configStatusPill.textContent = 'Local Standby';
         configStatusPill.className = 'welcome-status-pill pill-local';
       }
     }
-
-    // Initialize Auth in background
-    await initFirebase();
 
     // Check if returning user
     const savedName = localStorage.getItem('phantom_username');
