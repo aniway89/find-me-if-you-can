@@ -31,9 +31,9 @@ export async function initFirebase() {
 
     try {
       const [appMod, authMod, fsMod] = await Promise.all([
-        import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js'),
-        import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js'),
-        import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js')
+        import('https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js'),
+        import('https://www.gstatic.com/firebasejs/13.4.0/firebase-auth.js'),
+        import('https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js')
       ]);
 
       initializeApp = appMod.initializeApp;

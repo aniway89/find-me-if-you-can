@@ -4,13 +4,13 @@ import { events } from './core/events.js';
 import { audio } from './core/audio.js';
 import { wm } from './wm/window-manager.js';
 import { discoveryEngine } from './engine/discovery-engine.js';
-import { 
-  initFirebase, 
-  validateUsernameFormat, 
-  checkUsernameAvailable, 
-  registerPlayer, 
+import {
+  initFirebase,
+  validateUsernameFormat,
+  checkUsernameAvailable,
+  registerPlayer,
   fetchCurrentPlayerProfile,
-  isFirebaseConfigured 
+  isFirebaseConfigured
 } from './core/firebase-service.js';
 
 import { openExplorer } from './apps/explorer.js';
