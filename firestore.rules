@@ -1,22 +1,72 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Note: Client-side discovery validation is not cheat-proof without
-    // trusted server-side validation (e.g. Cloud Functions). In client-only
-    // environments, rules enforce identity ownership and schema bounds.
 
-    match /leaderboard/{userId} {
-      // Anyone can read the global leaderboard
+    /**
+     * Architectural Trust Limitation Notice:
+     * Client-side discovery validation cannot be 100% cheat-proof without
+     * trusted server-side compute (such as Firebase Cloud Functions).
+     * These rules enforce document ownership, schema boundaries, immutable
+     * identities, and monotonic score progressions, but cannot verify whether
+     * a puzzle was genuinely solved on the client.
+     */
+
+    // Username reservation collection (case-insensitive uniqueness)
+    match /usernames/{usernameLower} {
       allow read: if true;
 
-      // Users can only create or update their own profile document
-      allow create, update: if request.auth != null && request.auth.uid == userId
-        && request.resource.data.points >= 0
-        && request.resource.data.points <= 30
+      // Allow claiming only if username does not already exist
+      allow create: if request.auth != null
+        && request.resource.data.uid == request.auth.uid
         && request.resource.data.username is string
-        && request.resource.data.username.size() > 0
-        && request.resource.data.username.size() <= 20;
+        && request.resource.data.username.size() >= 3
+        && request.resource.data.username.size() <= 16
+        && request.resource.data.username.matches('^[a-zA-Z0-9_]{3,16}$')
+        && request.resource.data.username.lower() == usernameLower
+        && !exists(/databases/$(database)/documents/usernames/$(usernameLower));
 
+      // Usernames are immutable once claimed
+      allow update, delete: if false;
+    }
+
+    // Player profiles collection for the global leaderboard
+    match /players/{userId} {
+      allow read: if true;
+
+      // Create new profile upon onboarding
+      allow create: if request.auth != null
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.username is string
+        && request.resource.data.username.size() >= 3
+        && request.resource.data.username.size() <= 16
+        && request.resource.data.username.matches('^[a-zA-Z0-9_]{3,16}$')
+        && request.resource.data.usernameLowercase == request.resource.data.username.lower()
+        && request.resource.data.score is number
+        && request.resource.data.score >= 0
+        && request.resource.data.score <= 30
+        && request.resource.data.rank in ['EXPLORER', 'INVESTIGATOR', 'ENGINEER', 'HARD FIND', 'ARCHITECT']
+        && request.resource.data.discoveredSecrets is list
+        && request.resource.data.createdAt is string
+        && request.resource.data.updatedAt is string;
+
+      // Update existing profile (score sync)
+      allow update: if request.auth != null
+        && request.auth.uid == userId
+        // Immutable identity fields
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.username == resource.data.username
+        && request.resource.data.usernameLowercase == resource.data.usernameLowercase
+        && request.resource.data.createdAt == resource.data.createdAt
+        // Score bounds and monotonicity
+        && request.resource.data.score is number
+        && request.resource.data.score >= resource.data.score
+        && request.resource.data.score <= 30
+        && request.resource.data.rank in ['EXPLORER', 'INVESTIGATOR', 'ENGINEER', 'HARD FIND', 'ARCHITECT']
+        && request.resource.data.discoveredSecrets is list
+        && request.resource.data.updatedAt is string;
+
+      // Profiles cannot be deleted by clients
       allow delete: if false;
     }
   }

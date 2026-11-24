@@ -108,20 +108,37 @@
 
   <div id="notification-container"></div>
 
-  <!-- First Entry Popup Modal -->
+  <!-- First-time Onboarding Modal -->
   <div id="welcome-modal" class="modal-overlay" style="display: none;">
     <div class="welcome-card">
       <div class="welcome-header">
         <span class="welcome-logo">PhantomOS</span>
+        <span class="welcome-status-pill" id="welcome-config-status"></span>
       </div>
       <div class="welcome-body">
         <p>Welcome to PhantomOS.</p>
-        <p>This is a developer mystery game. Explore applications, inspect files and fix broken code to discover hidden secrets.</p>
-        <p>Each discovery gives you one point. Your discoveries determine your developer rank. The deeper you go, the harder things get.</p>
-        <p>Enter a username and start exploring.</p>
-        <form id="welcome-form" class="welcome-form">
-          <input type="text" id="welcome-username" class="welcome-input" placeholder="Username" maxlength="20" required autocomplete="off" autofocus />
-          <button type="submit" id="welcome-start-btn" class="btn btn-primary">Start</button>
+        <p>Explore applications, investigate files and solve hidden challenges to discover secrets. Every discovery earns you one point. Your progress determines your developer rank.</p>
+        <p>Choose a username and start exploring.</p>
+        
+        <form id="welcome-form" class="welcome-form" novalidate>
+          <div class="input-group">
+            <input 
+              type="text" 
+              id="welcome-username" 
+              class="welcome-input" 
+              placeholder="Username (3-16 characters)" 
+              minlength="3" 
+              maxlength="16" 
+              required 
+              autocomplete="off" 
+              spellcheck="false"
+              autofocus 
+            />
+            <div id="welcome-validation-msg" class="validation-message"></div>
+          </div>
+          <button type="submit" id="welcome-start-btn" class="btn btn-primary welcome-submit-btn">
+            Start Exploring
+          </button>
         </form>
       </div>
     </div>

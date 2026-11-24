@@ -4,7 +4,14 @@ import { events } from './core/events.js';
 import { audio } from './core/audio.js';
 import { wm } from './wm/window-manager.js';
 import { discoveryEngine } from './engine/discovery-engine.js';
-import { initFirebaseAuth, syncLeaderboardProfile } from './core/firebase-service.js';
+import { 
+  initFirebase, 
+  validateUsernameFormat, 
+  checkUsernameAvailable, 
+  registerPlayer, 
+  fetchCurrentPlayerProfile,
+  isFirebaseConfigured 
+} from './core/firebase-service.js';
 
 import { openExplorer } from './apps/explorer.js';
 import { openTerminal } from './apps/terminal.js';
@@ -29,8 +36,8 @@ const APPLICATIONS = [
   },
   {
     id: 'leaderboard',
-    name: 'Leaderboard',
-    desc: 'Global player rankings',
+    name: 'Global Leaderboard',
+    desc: 'Live global player rankings',
     icon: `<svg viewBox="0 0 24 24" fill="#388bfd"><path d="M16 11V3H8v6H2v12h20V11h-6zm-6-6h4v14h-4V5zm-6 8h4v6H4v-6zm16 6h-4v-8h4v8z"/></svg>`,
     launch: () => openLeaderboard()
   },
@@ -116,39 +123,119 @@ class OSBootstrapper {
     this.renderStartMenu();
     this.setupGlobalEvents();
 
-    await this.handleUserEntry();
+    await this.handleOnboarding();
   }
 
-  async handleUserEntry() {
+  async handleOnboarding() {
     const welcomeModal = document.getElementById('welcome-modal');
     const welcomeForm = document.getElementById('welcome-form');
     const welcomeInput = document.getElementById('welcome-username');
+    const validationMsg = document.getElementById('welcome-validation-msg');
+    const startBtn = document.getElementById('welcome-start-btn');
+    const configStatusPill = document.getElementById('welcome-config-status');
 
-    await initFirebaseAuth();
-
-    const storedUser = localStorage.getItem('phantom_username');
-    if (!storedUser || !storedUser.trim()) {
-      if (welcomeModal) {
-        welcomeModal.style.display = 'flex';
-        if (welcomeInput) welcomeInput.focus();
+    if (configStatusPill) {
+      if (isFirebaseConfigured()) {
+        configStatusPill.textContent = 'Firestore Connected';
+        configStatusPill.className = 'welcome-status-pill pill-online';
+      } else {
+        configStatusPill.textContent = 'Local Standby';
+        configStatusPill.className = 'welcome-status-pill pill-local';
       }
+    }
 
-      if (welcomeForm) {
-        welcomeForm.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          const val = welcomeInput.value.trim().slice(0, 20);
-          if (!val) return;
-          audio.playClick();
-          state.setUsername(val);
-          this.updateUserUI();
-          welcomeModal.style.display = 'none';
-          await syncLeaderboardProfile(val, state.points, state.rank, state.discoveredSecrets);
-        });
-      }
-    } else {
-      state.setUsername(storedUser);
+    // Initialize Auth in background
+    await initFirebase();
+
+    // Check if returning user
+    const savedName = localStorage.getItem('phantom_username');
+    let existingProfile = null;
+
+    if (savedName) {
+      existingProfile = await fetchCurrentPlayerProfile();
+    }
+
+    if (existingProfile && existingProfile.username) {
+      state.setUsername(existingProfile.username);
       this.updateUserUI();
-      await syncLeaderboardProfile(storedUser, state.points, state.rank, state.discoveredSecrets);
+      if (welcomeModal) welcomeModal.style.display = 'none';
+      return;
+    }
+
+    // New player: show onboarding modal
+    if (welcomeModal) {
+      welcomeModal.style.display = 'flex';
+      if (welcomeInput) welcomeInput.focus();
+    }
+
+    let checkTimer = null;
+
+    const setValidation = (text, type = '') => {
+      if (!validationMsg) return;
+      validationMsg.textContent = text;
+      validationMsg.className = `validation-message ${type}`;
+    };
+
+    if (welcomeInput) {
+      welcomeInput.addEventListener('input', () => {
+        clearTimeout(checkTimer);
+        const raw = welcomeInput.value.trim();
+
+        if (!raw) {
+          setValidation('');
+          return;
+        }
+
+        const format = validateUsernameFormat(raw);
+        if (!format.valid) {
+          setValidation(format.error, 'error');
+          return;
+        }
+
+        setValidation('Checking availability...', 'checking');
+
+        checkTimer = setTimeout(async () => {
+          const res = await checkUsernameAvailable(raw);
+          if (res.available) {
+            setValidation('Username is available.', 'success');
+          } else {
+            setValidation(res.error || 'Username already taken.', 'error');
+          }
+        }, 400);
+      });
+    }
+
+    if (welcomeForm) {
+      welcomeForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const raw = welcomeInput ? welcomeInput.value.trim() : '';
+
+        const format = validateUsernameFormat(raw);
+        if (!format.valid) {
+          setValidation(format.error, 'error');
+          return;
+        }
+
+        setValidation('Registering player identity...', 'checking');
+        if (startBtn) startBtn.disabled = true;
+
+        try {
+          const profile = await registerPlayer(format.clean, state.points, state.discoveredSecrets);
+          state.setUsername(profile.username);
+          this.updateUserUI();
+          audio.playClick();
+
+          if (welcomeModal) welcomeModal.style.display = 'none';
+          events.emit('system:show-toast', {
+            title: 'Identity Registered',
+            desc: `Welcome, ${profile.username}. Workstation initialized.`,
+            type: 'success'
+          });
+        } catch (err) {
+          setValidation(err.message || 'Registration failed. Please try again.', 'error');
+          if (startBtn) startBtn.disabled = false;
+        }
+      });
     }
   }
 
