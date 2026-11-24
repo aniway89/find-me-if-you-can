@@ -320,15 +320,24 @@ export async function getGlobalLeaderboard(limitCount = 50) {
 
   if (isConfigured && db) {
     try {
+      // Query by score desc. Single-field indexes are automatic in Firestore.
+      // This avoids requiring a manual composite index in Firebase Console.
       const q = query(
         collection(db, 'players'),
         orderBy('score', 'desc'),
-        orderBy('updatedAt', 'asc'),
         limit(limitCount)
       );
       const snapshot = await getDocs(q);
       const rows = [];
       snapshot.forEach(docSnap => rows.push(docSnap.data()));
+
+      // Apply tie-breaker in memory: earliest achievement of equal scores
+      rows.sort((a, b) => {
+        if ((b.score || 0) !== (a.score || 0)) {
+          return (b.score || 0) - (a.score || 0);
+        }
+        return (a.updatedAt || '').localeCompare(b.updatedAt || '');
+      });
 
       let totalCount = rows.length;
       try {
@@ -362,16 +371,23 @@ export function subscribeToLeaderboard(onSuccess, onError, limitCount = 50) {
   }
 
   try {
+    // Single-field ordering by score desc works immediately without requiring composite indexes
     const q = query(
       collection(db, 'players'),
       orderBy('score', 'desc'),
-      orderBy('updatedAt', 'asc'),
       limit(limitCount)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const rows = [];
       snapshot.forEach(docSnap => rows.push(docSnap.data()));
+      // Sort ties in memory: highest score first, earliest achievement for equal scores
+      rows.sort((a, b) => {
+        if ((b.score || 0) !== (a.score || 0)) {
+          return (b.score || 0) - (a.score || 0);
+        }
+        return (a.updatedAt || '').localeCompare(b.updatedAt || '');
+      });
       onSuccess({ rows, totalCount: rows.length, isConfigured: true });
     }, (err) => {
       console.warn('[Firestore] Leaderboard snapshot error:', err);
