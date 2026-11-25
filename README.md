@@ -7,11 +7,12 @@ Find the hidden gems. Each one gives you 1 point, and your rank depends on how m
 There are 130+ Dev secerets. Hope you find them all!
 
 ## Tech Stack
-In this project I have use
- C++ *For rough logic and core system building / not use in production *
- HTML 
- CSS
- JS
+> In this project I have use
+
+- C++ *For rough logic and core system building / not use in production *
+- HTML 
+- CSS
+- JS
 
 ## Screenshots
 
@@ -19,7 +20,7 @@ In this project I have use
 
 ![Screenshot 2](Screen_shorts/s2.png)
 
-## What to do
+## What To Do
 This is a web os theme game, all you have to find mistakes and fix them, each fix give you 1 point and higher the point lead you to top of leaderboard.
 
 And only few secerets have hint which let you know how deep the secerets lies.
