@@ -145,6 +145,16 @@ class ArchitectValidator {
         } catch (_) {}
       }
 
+      // Secret 087: NAT Table Port Forward Loop
+      if (!state.discoveredSecrets.has('secret_087')) {
+        try {
+          const nat = await vfs.readFile('/etc/nat.conf');
+          if (nat.includes('192.168.1.100:443') && !nat.includes('192.168.1.50:443')) {
+            this.unlock('secret_087');
+          }
+        } catch (_) {}
+      }
+
       // Secret 091: Weight Matrix NaN Purge
       if (!state.discoveredSecrets.has('secret_091')) {
         try {
@@ -368,7 +378,7 @@ class ArchitectValidator {
           printLine('[TCP] SYN packet dispatched. Received SYN-ACK. Sequence required for ACK.', 'term-info');
         } else if (step === 'ACK') {
           const st = architectRegistry.getPuzzleState('handshake');
-          if (st && st.syn && seq === '0xDEADBEEF') {
+          if (st && st.syn && (seq === '0XDEADBEEF' || seq === '0xDEADBEEF')) {
             printLine('[TCP] ACK 0xDEADBEEF accepted. 3-Way Handshake established.', 'term-suc');
             this.unlock('secret_032');
           } else {
