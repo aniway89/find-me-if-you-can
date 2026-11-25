@@ -4,8 +4,14 @@ Find Me If You Can is a PhantomOS-based web OS where you, as a developer, have t
 
 Find the hidden gems. Each one gives you 1 point, and your rank depends on how many points you collect.
 
-There are 50+ hidden gems. Hope you find them all!
+There are 130+ Dev secerets. Hope you find them all!
 
+## Tech Stack
+In this project I have use
+ C++ *For rough logic and core system building / not use in production *
+ HTML 
+ CSS
+ JS
 
 ## Screenshots
 
@@ -13,8 +19,15 @@ There are 50+ hidden gems. Hope you find them all!
 
 ![Screenshot 2](Screen_shorts/s2.png)
 
-## Live Link
+## What to do
+This is a web os theme game, all you have to find mistakes and fix them, each fix give you 1 point and higher the point lead you to top of leaderboard.
 
+And only few secerets have hint which let you know how deep the secerets lies.
+
+
+
+## Live Link
+ Here you can see it live.
 https://find-me-if-you-can-guys.web.app/
 
 ## A Message
