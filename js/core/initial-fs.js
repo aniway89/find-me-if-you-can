@@ -1,4 +1,6 @@
-export const INITIAL_FILESYSTEM = [
+import { ARCHITECT_FILESYSTEM } from './architect-fs.js';
+
+export const CORE_INITIAL_FILESYSTEM = [
   {
     path: '/readme.txt',
     isDirectory: false,
@@ -219,4 +221,9 @@ KEY=ARCHITECT_PHANTOM_SIG_ALPHA
 [2026-11-24 14:02:16] [SECURITY] Secret directory /.archive detected with restricted read permissions.
 `
   }
+];
+
+export const INITIAL_FILESYSTEM = [
+  ...CORE_INITIAL_FILESYSTEM,
+  ...ARCHITECT_FILESYSTEM
 ];

@@ -2,6 +2,7 @@ import { OSWindow } from '../wm/window.js';
 import { vfs } from '../core/vfs.js';
 import { state } from '../core/state.js';
 import { events } from '../core/events.js';
+import { architectValidator } from '../engine/architect-validator.js';
 
 export function openTerminal() {
   let cwd = '/home/desktop';
@@ -69,6 +70,10 @@ export function openTerminal() {
     const cmd = parts[0].toLowerCase();
     const args = parts.slice(1);
 
+    if (architectValidator.executeTerminalCommand(cmd, args, printLine)) {
+      return;
+    }
+
     switch (cmd) {
       case 'help':
         printLine(`Commands:
@@ -80,6 +85,7 @@ export function openTerminal() {
   mkdir [dir]     - Create directory
   rm [path]       - Remove file or directory
   mv [src] [dst]  - Rename or move file
+  chmod <m> <f>   - Change permissions
   chkfs           - Scan virtual filesystem
   ps              - List processes
   kill [pid]      - Signal process
@@ -87,6 +93,17 @@ export function openTerminal() {
   orion-probe     - Subsystem diagnostic
   devmode         - Developer mode flag (--unlock)
   secret / status - View discovery status
+  hint <id> [1-3] - Access progressive discovery hints
+  proto           - Forgotten Protocol tools (031-040)
+  mem             - Memory Labyrinth diagnostic (041-050)
+  crypto          - Cryptographer engine (051-060)
+  chronos         - Timekeeper chronos tools (061-070)
+  fsck            - Filesystem checker & repair (071-080)
+  net / traceroute- Network Cartographer (081-090)
+  ai-eval         - Machine Intelligence evaluator (091-100)
+  orion           - Project Orion Classified (111-120)
+  synthesis       - Grand Architect synthesis (121-129)
+  architect       - Final transcendence challenge (130)
   version         - Kernel release info
   whoami          - Current username
   clear           - Clear terminal`, 'term-info');

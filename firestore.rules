@@ -44,8 +44,8 @@ service cloud.firestore {
         && request.resource.data.usernameLowercase == request.resource.data.username.lower()
         && request.resource.data.score is number
         && request.resource.data.score >= 0
-        && request.resource.data.score <= 30
-        && request.resource.data.rank in ['EXPLORER', 'INVESTIGATOR', 'ENGINEER', 'HARD FIND', 'ARCHITECT']
+        && request.resource.data.score <= 130
+        && request.resource.data.rank in ['EXPLORER', 'INVESTIGATOR', 'ENGINEER', 'HARD FIND', 'ARCHITECT', 'ARCHITECT+']
         && request.resource.data.discoveredSecrets is list
         && request.resource.data.createdAt is string
         && request.resource.data.updatedAt is string;
@@ -61,8 +61,8 @@ service cloud.firestore {
         // Score bounds and monotonicity
         && request.resource.data.score is number
         && request.resource.data.score >= resource.data.score
-        && request.resource.data.score <= 30
-        && request.resource.data.rank in ['EXPLORER', 'INVESTIGATOR', 'ENGINEER', 'HARD FIND', 'ARCHITECT']
+        && request.resource.data.score <= 130
+        && request.resource.data.rank in ['EXPLORER', 'INVESTIGATOR', 'ENGINEER', 'HARD FIND', 'ARCHITECT', 'ARCHITECT+']
         && request.resource.data.discoveredSecrets is list
         && request.resource.data.updatedAt is string;
 

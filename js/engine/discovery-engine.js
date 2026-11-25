@@ -4,6 +4,7 @@ import { audio } from '../core/audio.js';
 import { events } from '../core/events.js';
 import { vfs } from '../core/vfs.js';
 import { syncLeaderboardProfile } from '../core/firebase-service.js';
+import { architectValidator } from './architect-validator.js';
 
 class DiscoveryEngine {
   constructor() {
@@ -24,6 +25,7 @@ class DiscoveryEngine {
     events.on('system:show-toast', (data) => this.showToast(data.title, data.desc, data.type));
 
     this.setupFrontendHackerChallenges();
+    architectValidator.init();
     setTimeout(() => this.validateVFSFiles(), 1200);
   }
 
@@ -48,6 +50,10 @@ class DiscoveryEngine {
 
     if (state.discoveredSecrets.size === 30) {
       this.triggerArchitectVictory();
+    }
+
+    if (state.discoveredSecrets.size === 130) {
+      architectValidator.triggerGrandArchitectCelebration();
     }
 
     return true;

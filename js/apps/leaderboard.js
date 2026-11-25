@@ -95,6 +95,7 @@ export function openLeaderboard() {
           <span class="legend-item"><span class="legend-badge badge-engineer">16-24</span> ENGINEER</span>
           <span class="legend-item"><span class="legend-badge badge-hardfind">25-29</span> HARD FIND</span>
           <span class="legend-item"><span class="legend-badge badge-architect">30</span> ARCHITECT</span>
+          <span class="legend-item"><span class="legend-badge badge-architect-plus">31-130</span> ARCHITECT+</span>
         </div>
 
         <!-- Mode banner if unconfigured -->

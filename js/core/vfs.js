@@ -48,10 +48,7 @@ class VirtualFileSystem {
 
       req.onsuccess = async (e) => {
         this.db = e.target.result;
-        const count = await this.countFiles();
-        if (count === 0) {
-          await this.populateInitialFiles();
-        }
+        await this.syncMissingInitialFiles();
         resolve(this);
       };
 
@@ -87,6 +84,15 @@ class VirtualFileSystem {
   async populateInitialFiles() {
     for (const item of INITIAL_FILESYSTEM) {
       await this.writeFile(item.path, item.content || '', { isInitial: true, isDirectory: item.isDirectory });
+    }
+  }
+
+  async syncMissingInitialFiles() {
+    for (const item of INITIAL_FILESYSTEM) {
+      const exists = await this.exists(item.path);
+      if (!exists) {
+        await this.writeFile(item.path, item.content || '', { isInitial: true, isDirectory: item.isDirectory });
+      }
     }
   }
 

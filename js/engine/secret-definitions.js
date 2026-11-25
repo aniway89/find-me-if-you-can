@@ -2,7 +2,9 @@
  * Find Me If You Can — Secret Definitions (All 30 Secrets across 5 Tiers)
  */
 
-export const SECRETS = {
+import { ARCHITECT_SECRETS } from './architect-secrets-data.js';
+
+export const CORE_SECRETS = {
   // =========================================================================
   // TIER 1: EXPLORER (Secrets 01–05)
   // =========================================================================
@@ -262,4 +264,9 @@ export const SECRETS = {
     description: 'Decrypted the true history of Project Orion by uniting the vault key, system core, and all 10 VFS repairs.',
     points: 1
   }
+};
+
+export const SECRETS = {
+  ...CORE_SECRETS,
+  ...ARCHITECT_SECRETS
 };

@@ -272,7 +272,7 @@ export async function syncLeaderboardProfile(username, points, rank, discoveredS
   const uid = getCurrentUid();
   if (!username) return;
 
-  const score = Math.min(30, Math.max(0, points || 0));
+  const score = Math.min(130, Math.max(0, points || 0));
   const rName = rank || getRankInfo(score).name;
   const now = new Date().toISOString();
 
